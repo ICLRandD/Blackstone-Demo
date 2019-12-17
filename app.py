@@ -10,7 +10,11 @@ import altair as alt
 
 
 SPACY_MODEL_NAMES = ["en_blackstone_proto",]
-DEFAULT_TEXT = "In R v Horncastle [2009] 1 AC 373, the Supreme Court held that s 114 of the Criminal Justice Act 2003 was incompatible with Article 6 of the European Convention on Human Rights."
+DEFAULT_TEXT = """The next question is, therefore, whether this immunity in respect of functions is cut down as a matter of the interpretation of the Vienna Convention and the Act of 1978. The provisions of the Act “fall to be construed against the background of those principles of public international law as are generally recognised by the family of nations:” Alcom Ltd. v. Republic of Colombia [1984] A.C. 580, 597, per Lord Diplock. So also as I see it must the Convention be interpreted.
+
+The original concept of the immunity of a head of state in customary international law in part arose from the fact that he or she was a monarch who by reason of personal dignity and respect ought not to be impleaded 75in a foreign state: it was linked no less to the idea that the head of state was, or represented, the state and that to sue him was tantamount to suing an independent state extra-territorially, something which the comity of nations did not allow. Moreover, although the concepts of state immunity and sovereign immunity have different origins, it seems to me that the latter is an attribute of the former and that both are essentially based on the principles of sovereign independence and dignity, see for example, Suchariktul in his report to the International Law Commission (1980) Vol. II Doc. A (LN 4–331 and Add.J.) and Marshall C.J. in the Schooner Exchange v. M'Faddon (1812) 11 U.S. (7 Cranch) 116.
+
+In Duke of Brunswick v. King of Hanover (1848) 2 H.L.Cas. 1 the Duke claimed that the King of Hanover had been involved in the removal of the Duke from his position as reigning Duke and in the maladministration of his estates. Lord Cottenham L.C. said, at. p. 17:"""
 HTML_WRAPPER = """<div style="overflow-x: auto; border: 1px solid #e6e9ef; border-radius: 0.25rem; padding: 1rem; margin-bottom: 2.5rem">{}</div>"""
 
 @st.cache(allow_output_mutation=True)
@@ -38,22 +42,25 @@ def get_top_cat(doc):
 
 
 st.sidebar.markdown('<img src="https://iclr.s3-eu-west-1.amazonaws.com/assets/iclrand/blackstone_seal.svg" alt="Blackstone_Logo" />', unsafe_allow_html=True)
-
+st.sidebar.markdown("[Blackstone](https://github.com/ICLRandD/Blackstone) is a [spaCy](https://spacy.io/) model and library for processing long-form, unstructured legal text. Blackstone is an experimental research project from the [Incorporated Council of Law Reporting for England and Wales'](https://www.iclr.co.uk) research lab, [ICLR&D](https://research.iclr.co.uk).")
 spacy_model = st.sidebar.selectbox("Model name", SPACY_MODEL_NAMES)
 model_load_state = st.info(f"Loading model '{spacy_model}'...")
 nlp = load_model(spacy_model)
 model_load_state.empty()
 
+st.header("Enter some text...")
 text = st.text_area("Text to analyze", DEFAULT_TEXT)
 doc = process_text(spacy_model, text)
-
+st.markdown("___")
 if "ner" in nlp.pipe_names:
     st.header("Named Entities")
+    st.markdown("Blackstone's NER pipe attempts to identify `CASENAMES`, `CITATION`, `INSTRUMENTS`, `PROVISIONS`, `COURTS` AND `JUDGES`.")
     st.sidebar.header("Named Entities")
     default_labels = ["CASENAME", "CITATION", "INSTRUMENT", "PROVISION", "COURT", "JUDGE"]
     labels = st.sidebar.multiselect(
         "Entity labels", nlp.get_pipe("ner").labels, default_labels
     )
+    st.markdown("#### Document view")
     html = displacy.render(doc, style="ent", options=ner_displacy_options)
     # Newlines seem to mess with the rendering
     html = html.replace("\n", " ")
@@ -64,7 +71,7 @@ if "ner" in nlp.pipe_names:
         for ent in doc.ents
         if ent.label_ in labels
     ]
-
+    st.markdown("#### Dateframe view")
     df = pd.DataFrame(data, columns=attrs)
     st.dataframe(df)
     CASENAMES = len([ent.text for ent in doc.ents if ent.label_ == "CASENAME"])
@@ -82,13 +89,15 @@ if "ner" in nlp.pipe_names:
     y='counts:Q',
     color='entities'
     )
+    st.markdown("#### Entity plot")
+    st.altair_chart(entity_chart, width=700)
 
-    st.altair_chart(entity_chart, width=900)
-
+st.markdown("___")
 
 
 if "textcat" in nlp.pipe_names:
     st.header("Text Categoriser")
+    st.markdown("Blackstone's text categoriser pipe classify sentences accordings to one of four types: `AXIOM`, `CONCLUSION`, `ISSUE`, `LEGAL_TEST`. By default, the table view below will hide sentences that do not fall into one of those four categories. To include uncategorised sentences in the table, check the `Include uncategorised sentences` box in the left sidebar.")
     st.sidebar.header("Text Categoriser")
     include_uncat = st.sidebar.checkbox("Include uncategorised sentences?")
     TOP_CATEGORIES = []
@@ -110,8 +119,13 @@ if "textcat" in nlp.pipe_names:
     category_df = pd.DataFrame(category_data)
     st.table(category_df)
 
+acknowledgement_text = """
+*Inspired* by [Scispacy](https://github.com/allenai/scispacy) (maintained by [Mark Neumann](https://markneumann.xyz/) and [Daniel King](https://www.linkedin.com/in/daniel-king-2190a595) at the [Allen Institute for Artificial Intelligence](https://allenai.org/). *Adapted* from [Ines Montani's](https://ines.io/) excellent demonstration of using [spaCy](https://spacy.io/) models in Streamlit applications. Ines' original tweet (which points to the gist) [here](https://twitter.com/_inesmontani/status/1179155259819806721?lang=en). [Blackstone](https://github.com/ICLRandD/Blackstone) is maintained by [Daniel Hoadley](https://twitter.com/DanHLawReporter) at [ICLR&D](https://research.iclr.co.uk)
+"""
 
-    st.sidebar.markdown("## Acknowledgements")
-    st.sidebar.markdown("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.")
 
-    st.sidebar.markdown('<img src="https://iclr.s3-eu-west-1.amazonaws.com/assets/iclrand/sitecode.svg" alt="Blackstone_Logo" />', unsafe_allow_html=True)
+st.sidebar.markdown("## Acknowledgements")
+st.sidebar.markdown(acknowledgement_text)
+
+
+
