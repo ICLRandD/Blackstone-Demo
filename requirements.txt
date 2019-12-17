@@ -15,7 +15,7 @@ conllu==2.2
 cymem==2.0.3
 decorator==4.4.1
 docutils==0.15.2
-en-blackstone-proto==0.0.1
+https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz
 entrypoints==0.3
 enum-compat==0.0.3
 future==0.18.2
