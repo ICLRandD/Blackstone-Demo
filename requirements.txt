@@ -33,7 +33,7 @@ pathtools==0.1.2
 Pillow==6.2.1
 plac==0.9.6
 preshed==2.0.1
-protobuf==3.11.1
+protobuf==3.15.0
 pyrsistent==0.15.6
 python-dateutil==2.8.0
 pytz==2019.3
